@@ -78,26 +78,17 @@ if __name__ == '__main__':
 
     function_list = [
         np.sin,
-        np.cos,
-        # np.tan,
-        # np.exp,
-        # np.tanh,
-        # np.sinh,
-        # np.cosh,
-        # np.i0,
-        # np.sinc
+        np.cos
     ]
 
-    variations = [
+    x_variations = [
         x,
+        x ** 2,
+    ]
+
+    y_variations = [
         y,
-        # x ** 2,
-        # y ** 2,
-        # x ** 3,
-        # y ** 3,
-        # x * y,
-        # x * y ** 2,
-        # x ** 2 * y
+        y ** 2,
     ]
 
     for n in range(n_images):
@@ -127,18 +118,16 @@ if __name__ == '__main__':
             y_terms = bool(randint(0, 1))
             cross_terms = bool(randint(0, 1))
 
-        # img = generate_image(choice(variations) * x_factor, choice(variations) * y_factor, nm, operation, f_list,
-        #                      multiply=multiply, x_terms=x_terms, y_terms=y_terms, cross_terms=cross_terms)
-
-        img = generate_image(x * x_factor, y * y_factor, nm, operation, f_list,
+        img = generate_image(choice(x_variations) * x_factor, choice(y_variations) * y_factor, nm, operation, f_list,
                              multiply=multiply, x_terms=x_terms, y_terms=y_terms, cross_terms=cross_terms)
+
+        # img = generate_image(x * x_factor, y * y_factor, nm, operation, f_list,
+        #                      multiply=multiply, x_terms=x_terms, y_terms=y_terms, cross_terms=cross_terms)
 
         filename = f'{n}.png'
         plt.imshow(img, cmap='gray')
-        plt.show()
         plt.savefig(os.path.join(data_folder, real_folder, filename))
 
         wrapped_img = np.angle(np.exp(1j * img))
         plt.imshow(wrapped_img, cmap='gray')
-        plt.show()
         plt.savefig(os.path.join(data_folder, wrapped_folder, filename))
