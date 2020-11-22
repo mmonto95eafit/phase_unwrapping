@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import os
 from random import randint, choice
 
@@ -62,7 +63,10 @@ if __name__ == '__main__':
     data_folder = 'data'
     real_folder = 'real'
     wrapped_folder = 'wrapped'
-    n_images = 100
+    n_images = 100000
+    start_number = 1
+    img_size = 240
+    size = complex(f'{img_size}j')
 
     if data_folder not in os.listdir('.'):
         os.mkdir(data_folder)
@@ -73,7 +77,7 @@ if __name__ == '__main__':
     if wrapped_folder not in os.listdir(data_folder):
         os.mkdir(os.path.join(data_folder, wrapped_folder))
 
-    x, y = np.mgrid[-1:1:240j, -1:1:240j]
+    x, y = np.mgrid[-1:1:size, -1:1:size]
     nmax = 11 * np.pi  # 5 phase wrappings
 
     function_list = [
@@ -124,10 +128,10 @@ if __name__ == '__main__':
         # img = generate_image(x * x_factor, y * y_factor, nm, operation, f_list,
         #                      multiply=multiply, x_terms=x_terms, y_terms=y_terms, cross_terms=cross_terms)
 
-        filename = f'{n}.png'
-        plt.imshow(img, cmap='gray')
-        plt.savefig(os.path.join(data_folder, real_folder, filename))
+        filename = f'{n + start_number}.png'
+        plt.imsave(os.path.join(data_folder, real_folder, filename), img, cmap='gray')
+        plt.close()
 
         wrapped_img = np.angle(np.exp(1j * img))
-        plt.imshow(wrapped_img, cmap='gray')
-        plt.savefig(os.path.join(data_folder, wrapped_folder, filename))
+        plt.imsave(os.path.join(data_folder, wrapped_folder, filename), wrapped_img, cmap='gray')
+        plt.close()
