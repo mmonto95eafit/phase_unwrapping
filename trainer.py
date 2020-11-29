@@ -1,8 +1,10 @@
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras import Model
+from tensorflow.keras.models import load_model
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def build_model(input_layer, start_neurons):
@@ -90,8 +92,8 @@ def build_model(input_layer, start_neurons):
 
 
 def load_images():
-    real_directory = 'data/train/real'
-    wrapped_directory = 'data/train/wrapped'
+    real_directory = 'data/real_simple'
+    wrapped_directory = 'data/wrapped_simple'
     inputs = []
     targets = []
     for filename in os.listdir(real_directory):
@@ -116,9 +118,35 @@ if __name__ == '__main__':
 
     x, y = load_images()
 
-    input_layer = Input((240, 240, 1))
-    output_layer = build_model(input_layer, 16)
-    unet = Model(input_layer, output_layer)
+    # input_layer = Input((128, 128, 1))
+    # # input_layer = Input((240, 240, 1))
+    # output_layer = build_model(input_layer, 16)
+    # unet = Model(input_layer, output_layer)
+    #
+    # unet.compile(optimizer="adam", loss="mse")
 
-    unet.compile(optimizer="adam", loss="mse")
-    unet.fit(x, y, batch_size=batch_size, epochs=1)
+    unet = load_model('data/models/128x128.h5')
+    
+    history = unet.fit(x, y, batch_size=batch_size, epochs=10)
+
+    unet.save(f'data/models/128x128.h5')
+
+    plt.figure(figsize=(12, 8))
+    plt.plot(history.history['loss'])
+    plt.savefig('data/plots/loss.png')
+
+    for file in os.listdir(f'data/wrapped_simple')[:10]:
+        img = load_img(f'data/wrapped_simple/{file}', color_mode='grayscale')
+        wrapped_img = np.expand_dims(np.asarray(img) / 255, axis=2)
+        predicted_img = unet.predict(np.array([wrapped_img]))
+        predicted_img = predicted_img.reshape(predicted_img.shape[1], predicted_img.shape[2])
+
+        img = load_img(f'data/real_simple/{file}', color_mode='grayscale')
+        real_img = np.asarray(img) / 255
+
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+        fig.set_size_inches(12, 8)
+        ax1.imshow(wrapped_img.reshape(predicted_img.shape[0], predicted_img.shape[1]), cmap='gray')
+        ax2.imshow(predicted_img, cmap='gray')
+        ax3.imshow(real_img, cmap='gray')
+        plt.savefig(f'data/plots/{file}')

@@ -61,11 +61,11 @@ def generate_image(x, y, nmax, operation, function_list, multiply=True, **kwargs
 
 if __name__ == '__main__':
     data_folder = 'data'
-    real_folder = 'real'
-    wrapped_folder = 'wrapped'
-    n_images = 100000
+    real_folder = 'real_simple'
+    wrapped_folder = 'wrapped_simple'
+    n_images = 5000
     start_number = 1
-    img_size = 240
+    img_size = 128
     size = complex(f'{img_size}j')
 
     if data_folder not in os.listdir('.'):
@@ -78,7 +78,8 @@ if __name__ == '__main__':
         os.mkdir(os.path.join(data_folder, wrapped_folder))
 
     x, y = np.mgrid[-1:1:size, -1:1:size]
-    nmax = 11 * np.pi  # 5 phase wrappings
+    nmax = 2 * np.pi
+    # nmax = 11 * np.pi  # 5 phase wrappings
 
     function_list = [
         np.sin,
@@ -96,24 +97,29 @@ if __name__ == '__main__':
     ]
 
     for n in range(n_images):
-        x_factor = randint(-5, 5)
+        # x_factor = randint(-5, 5)
+        x_factor = randint(-3, 3)
         if x_factor == 0:
             x_factor = 1
 
-        y_factor = randint(-5, 5)
+        # y_factor = randint(-5, 5)
+        y_factor = randint(-3, 3)
         if y_factor == 0:
             y_factor = 1
 
-        nm = nmax / randint(1, 5)
+        nm = nmax
+        # nm = nmax / randint(1, 5)
 
         f_list = []
         for i in range(randint(2, 3)):
             f_list.append(choice(function_list))
 
-        multiply = bool(randint(0, 1))
+        # multiply = bool(randint(0, 1))
+        multiply = True
         x_terms = bool(randint(0, 1))
         y_terms = bool(randint(0, 1))
-        cross_terms = bool(randint(0, 1))
+        cross_terms = False
+        # cross_terms = bool(randint(0, 1))
         operation = 2
         # operation = randint(0, 3)
 
