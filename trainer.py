@@ -1,10 +1,14 @@
+import math
+
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras import Model
 from tensorflow.keras.models import load_model
+from tensorflow.keras.utils import Sequence
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from skimage.io import imread
 
 
 def build_model(input_layer, start_neurons):
@@ -61,6 +65,27 @@ def build_model(input_layer, start_neurons):
     return output_layer
 
 
+class PhaseUnwrappingSequence(Sequence):
+
+    def __init__(self, x_set, y_set, batch_size=32):
+        self.x, self.y = x_set, y_set
+        self.batch_size = batch_size
+
+    def __len__(self):
+        return math.ceil(len(self.x) / self.batch_size)
+
+    def __getitem__(self, idx):
+        batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+
+        return (np.array([np.expand_dims(imread(file_name, as_gray=True) / 255., axis=2) for file_name in batch_x]),
+                np.array([np.expand_dims(imread(file_name, as_gray=True) / 255., axis=2) for file_name in batch_y]))
+
+
+def wrap_image(img):
+    return np.angle(np.exp(1j * np.array(img)))
+
+
 # def image_generator(batchsize):
 #     real_directory = 'data/train/real'
 #     wrapped_directory = 'data/train/wrapped'
@@ -106,8 +131,8 @@ def load_images():
         img = load_img(wrapped_file, color_mode='grayscale')
         wrapped_img = np.expand_dims(np.asarray(img) / 255, axis=2)
 
-        inputs.append(real_img)
-        targets.append(wrapped_img)
+        targets.append(real_img)
+        inputs.append(wrapped_img)
 
     return np.array(inputs, dtype='float32'), np.array(targets, dtype='float32')
 
@@ -116,18 +141,28 @@ if __name__ == '__main__':
     batch_size = 100
     n_images = 4000
 
-    x, y = load_images()
+    # x, y = load_images()
+    real_directory = 'data/real_simple'
+    wrapped_directory = 'data/wrapped_simple'
+    wrapped_files = os.listdir(wrapped_directory)
+    real_files = os.listdir(real_directory)
 
-    # input_layer = Input((128, 128, 1))
-    # # input_layer = Input((240, 240, 1))
-    # output_layer = build_model(input_layer, 16)
-    # unet = Model(input_layer, output_layer)
-    #
-    # unet.compile(optimizer="adam", loss="mse")
+    x_set = [f'{wrapped_directory}/{file}' for file in wrapped_files if file in real_files]
+    y_set = [f'{real_directory}/{file}' for file in wrapped_files if file in wrapped_files]
 
-    unet = load_model('data/models/128x128.h5')
-    
-    history = unet.fit(x, y, batch_size=batch_size, epochs=10)
+    sequence = PhaseUnwrappingSequence(x_set, y_set, batch_size=batch_size)
+
+    input_layer = Input((128, 128, 1))
+    # input_layer = Input((240, 240, 1))
+    output_layer = build_model(input_layer, 16)
+    unet = Model(input_layer, output_layer)
+
+    unet.compile(optimizer="adam", loss="mse")
+
+    # unet = load_model('data/models/128x128.h5')
+
+    history = unet.fit(sequence, epochs=10)
+    # history = unet.fit(x, y, batch_size=batch_size, epochs=10)
 
     unet.save(f'data/models/128x128.h5')
 
