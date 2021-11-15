@@ -78,8 +78,10 @@ class PhaseUnwrappingSequence(Sequence):
         batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
         batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
 
-        return (np.array([np.expand_dims(imread(file_name, as_gray=True) / 255., axis=2) for file_name in batch_x]),
-                np.array([np.expand_dims(imread(file_name, as_gray=True) / 255., axis=2) for file_name in batch_y]))
+        return (np.array([np.expand_dims(np.asarray(load_img(file_name, color_mode='grayscale')) / 255., axis=2)
+                          for file_name in batch_x]),
+                np.array([np.expand_dims(np.asarray(load_img(file_name, color_mode='grayscale')) / 255., axis=2)
+                          for file_name in batch_y]))
 
 
 def wrap_image(img):
@@ -137,8 +139,8 @@ def load_images():
     return np.array(inputs, dtype='float32'), np.array(targets, dtype='float32')
 
 
-if __name__ == '__main__':
-    batch_size = 100
+def main():
+    batch_size = 64
     n_images = 4000
 
     # x, y = load_images()
@@ -148,11 +150,11 @@ if __name__ == '__main__':
     real_files = os.listdir(real_directory)
 
     x_set = [f'{wrapped_directory}/{file}' for file in wrapped_files if file in real_files]
-    y_set = [f'{real_directory}/{file}' for file in wrapped_files if file in wrapped_files]
+    y_set = [f'{real_directory}/{file}' for file in real_files if file in wrapped_files]
 
     sequence = PhaseUnwrappingSequence(x_set, y_set, batch_size=batch_size)
 
-    input_layer = Input((128, 128, 1))
+    input_layer = Input((1024, 1024, 1))
     # input_layer = Input((240, 240, 1))
     output_layer = build_model(input_layer, 16)
     unet = Model(input_layer, output_layer)
@@ -164,7 +166,7 @@ if __name__ == '__main__':
     history = unet.fit(sequence, epochs=10)
     # history = unet.fit(x, y, batch_size=batch_size, epochs=10)
 
-    unet.save(f'data/models/128x128.h5')
+    unet.save(f'data/models/1024x1024.h5')
 
     plt.figure(figsize=(12, 8))
     plt.plot(history.history['loss'])
@@ -185,3 +187,7 @@ if __name__ == '__main__':
         ax2.imshow(predicted_img, cmap='gray')
         ax3.imshow(real_img, cmap='gray')
         plt.savefig(f'data/plots/{file}')
+
+
+if __name__ == '__main__':
+    main()
